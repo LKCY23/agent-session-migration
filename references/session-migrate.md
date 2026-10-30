@@ -18,12 +18,8 @@
 
 `session_id` 为目标会话 ID，`output` 为文件路径；`warnings`、`dropped_events` 记录内容损失。
 
-在目标工作目录恢复会话，使用迁移时对应的 `CODEX_HOME` 或 `CLAUDE_CONFIG_DIR`：
-
-- Codex：`codex resume <session_id>`
-- Claude Code CLI：`claude --resume <session_id>`
-
-目标为 Claude Code Desktop 时，按[桌面接续](claude-desktop.md)打开转换后的会话。
+- Codex：按[会话接续](codex.md)在 CLI 或 Desktop 中打开。
+- Claude Code：按[会话接续](claude-code.md)在 CLI 或 Desktop 中打开。
 
 ## 限制
 

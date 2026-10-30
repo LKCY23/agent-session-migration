@@ -24,7 +24,7 @@ description: 在不同agent之间迁移原生会话；用于跨 agent 搬移聊�
 
 1. 确定来源和目标 agent、目标入口（CLI 或 Desktop）、源会话、工作目录及数据目录。
 2. 按表中工具的 reference 检查运行条件、预览并执行迁移，保留源会话。需要中转时，使用上一步实际生成的文件。
-3. 检查目标会话的历史和工具记录。目标为 Claude Code Desktop 时，按[桌面接续](references/claude-desktop.md)打开会话。
+3. 检查目标会话的历史和工具记录，按目标 agent 的接续说明打开：[Claude Code](references/claude-code.md)、[Codex](references/codex.md)。
 4. 返回目标会话 ID、路径、恢复命令和内容损失，说明实际完成阶段：已转换、已打开或已续聊。
 5. 验证完成后清理本次临时文件，保留目标会话。
 
