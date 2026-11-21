@@ -11,20 +11,21 @@ description: 在不同agent之间迁移原生会话；用于跨 agent 搬移聊�
 
 根据来源和目标选择下表中的工具，读取链接查看调用方式。
 
-| 来源 ↓ / 目标 → | Codex | Claude Code | Pi | DSH |
-|---|---|---|---|---|
-| **Codex** | — | [session-migrate][sm] | [harnext][hn] | [dsh-chat-import][dsh] |
-| **Claude Code** | [session-migrate][sm] | — | [harnext][hn] | [dsh-chat-import][dsh] |
-| **Pi** | [harnext][hn] | [harnext][hn] | — | [dsh-chat-import][dsh] |
-| **DSH** | [dsh-chat-import][dsh] → [session-migrate][sm] | [dsh-chat-import][dsh] | [dsh-chat-import][dsh] → [harnext][hn] | — |
+| 来源 ↓ / 目标 → | Codex | Claude Code | Pi | DSH | Antigravity |
+|---|---|---|---|---|---|
+| **Codex** | — | [session-migrate][sm] | [harnext][hn] | [dsh-chat-import][dsh] | [ccx][ccx] |
+| **Claude Code** | [session-migrate][sm] | — | [harnext][hn] | [dsh-chat-import][dsh] | [ccx][ccx] |
+| **Pi** | [harnext][hn] | [harnext][hn] | — | [dsh-chat-import][dsh] | [harnext][hn] → [ccx][ccx] |
+| **DSH** | [dsh-chat-import][dsh] → [session-migrate][sm] | [dsh-chat-import][dsh] | [dsh-chat-import][dsh] → [harnext][hn] | — | [dsh-chat-import][dsh] → [ccx][ccx] |
+| **Antigravity** | [ccx][ccx] | [ccx][ccx] | [ccx][ccx] → [harnext][hn] | [ccx][ccx] → [dsh-chat-import][dsh] | — |
 
-`→` 表示依次调用两个工具，以 Claude Code JSONL 文件中转。
+`→` 表示依次调用两个工具，以 Claude Code JSONL 文件中转。Antigravity 当前仅支持 macOS Desktop，暂不支持独立 CLI（`agy`）。
 
 ## 执行迁移
 
 1. 确定来源和目标 agent、目标入口（CLI 或 Desktop）、源会话、工作目录及数据目录。
-2. 按表中工具的 reference 检查运行条件、预览并执行迁移，保留源会话。需要中转时，使用上一步实际生成的文件。
-3. 检查目标会话的历史和工具记录，按目标 agent 的接续说明打开：[Claude Code](references/claude-code.md)、[Codex](references/codex.md)。
+2. 按表中工具的 reference 检查运行条件、预览并执行迁移，保留源会话；缺工具时先用 `python3 scripts/tools.py doctor` 检查并按 [README.md](README.md) 安装。需要中转时，使用上一步实际生成的文件。
+3. 检查目标会话的历史和工具记录，按目标 agent 的接续说明打开：[Claude Code](references/claude-code.md)、[Codex](references/codex.md)、[Antigravity](references/antigravity.md)。
 4. 返回目标会话 ID、路径、恢复命令和内容损失，说明实际完成阶段：已转换、已打开或已续聊。
 5. 验证完成后清理本次临时文件，保留目标会话。
 
@@ -33,3 +34,4 @@ description: 在不同agent之间迁移原生会话；用于跨 agent 搬移聊�
 [sm]: references/session-migrate.md
 [hn]: references/harnext.md
 [dsh]: references/dsh-chat-import.md
+[ccx]: references/ccx.md

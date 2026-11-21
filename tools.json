@@ -1,0 +1,39 @@
+{
+  "session-migrate": {
+    "version": "0.12.0",
+    "source": "pypi",
+    "package": "session-migrate",
+    "repo": "xhluca/session-migrate",
+    "command": "session-migrate",
+    "version_args": ["--version"],
+    "releases_url": "https://github.com/xhluca/session-migrate/releases"
+  },
+  "harnext": {
+    "version": "0.8.2",
+    "source": "npm",
+    "package": "@buildingthefuture/harnext",
+    "repo": "AbhinavMir/harnext",
+    "command": "harnext",
+    "version_args": ["--version"],
+    "releases_url": "https://github.com/AbhinavMir/harnext/releases"
+  },
+  "dsh-chat-import": {
+    "version": "0.26.2",
+    "source": "github-release",
+    "repo": "Nwflower/dsh-chat-import",
+    "tag_prefix": "v",
+    "command": "dsh",
+    "host_note": "DSH 桌面引擎 0.2.1-rc.2",
+    "releases_url": "https://github.com/Nwflower/dsh-chat-import/releases"
+  },
+  "ccx": {
+    "version": "0.1.7",
+    "source": "github-release",
+    "repo": "AaronWong1999/ccx",
+    "tag_prefix": "v",
+    "command": "ccx",
+    "version_args": ["--version"],
+    "cli_dir": "~/.local/share/agent-session-migration/ccx",
+    "releases_url": "https://github.com/AaronWong1999/ccx/releases"
+  }
+}

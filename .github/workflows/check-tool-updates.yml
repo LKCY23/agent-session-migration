@@ -1,0 +1,91 @@
+name: Check Upstream Tool Updates
+
+on:
+  schedule:
+    # Weekly on Mondays at 02:00 UTC (10:00 CST)
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check upstream tool versions
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/tools.py check-updates --json > updates.json
+          python3 scripts/tools.py check-updates --markdown > updates.md
+          cat updates.md
+          HAS_UPDATES=$(python3 -c 'import json; print("true" if json.load(open("updates.json"))["has_updates"] else "false")')
+          echo "has_updates=$HAS_UPDATES" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update tracking issue
+        if: steps.check.outputs.has_updates == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const table = fs.readFileSync('updates.md', 'utf8').trim();
+            const title = '上游会话迁移工具版本更新巡检';
+            const label = 'tool-update';
+            const body = [
+              '检测到 `tools.json` 中锁定的上游工具有新版本发布：',
+              '',
+              table,
+              '',
+              '### 建议升级流程',
+              '1. 查看对应工具的 Release Notes，确认 CLI 参数与会话格式无破坏性变更；',
+              '2. 本地临时安装新版本并运行 `python3 scripts/smoke_test.py` 隔离冒烟验证；',
+              '3. 验证通过后更新 `tools.json`、`README.md` 与对应 `references/*.md` 中的版本号及限制说明。',
+              '',
+              `_自动巡检时间：${new Date().toISOString()}_`,
+            ].join('\n');
+
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: label,
+                color: '0e8a16',
+                description: 'Upstream migration tool version check',
+              });
+            } catch (err) {
+              if (err.status !== 422) throw err;
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 20,
+            });
+            const existing = issues.find((i) => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: [label],
+              });
+            }
