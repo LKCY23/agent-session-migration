@@ -11,7 +11,7 @@ python3 scripts/tools.py check-updates          # 只读查询上游最新版本
 python3 scripts/smoke_test.py                   # 隔离临时目录冒烟测试（升级前后回归用）
 ```
 
-仓库已配置每周自动巡检工作流 [.github/workflows/check-tool-updates.yml](.github/workflows/check-tool-updates.yml)，发现上游新版本时自动创建/更新追踪 Issue；升级版本前先跑隔离冒烟测试，再更新 `tools.json` 与文档。
+仓库已配置每周自动巡检工作流 [.github/workflows/check-tool-updates.yml](.github/workflows/check-tool-updates.yml)，发现上游新版本时自动创建/更新版本升级 PR（不自动合并）；合并前先跑隔离冒烟测试，并同步文档中的版本号与限制说明。
 
 ## session-migrate
 

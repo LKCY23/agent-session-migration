@@ -256,6 +256,12 @@ def cmd_check_updates(args: argparse.Namespace) -> int:
 
     has_updates = any(r["update_available"] for r in rows)
 
+    if args.apply and has_updates:
+        for r in rows:
+            if r["update_available"] and r["latest"]:
+                tools[r["name"]]["version"] = r["latest"]
+        TOOLS_FILE.write_text(json.dumps(tools, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
     if args.json:
         print(json.dumps({"has_updates": has_updates, "tools": rows}, ensure_ascii=False, indent=2))
     elif args.markdown:
@@ -294,9 +300,10 @@ def main() -> int:
     p_inst.add_argument("--force", action="store_true", help="覆盖重装已有版本")
     p_inst.set_defaults(func=cmd_install)
 
-    p_chk = sub.add_parser("check-updates", help="检查上游最新版本，与 tools.json 对比（只读）")
+    p_chk = sub.add_parser("check-updates", help="检查上游最新版本，与 tools.json 对比（默认只读）")
     p_chk.add_argument("--json", action="store_true", help="以 JSON 输出")
     p_chk.add_argument("--markdown", action="store_true", help="以 Markdown 表格输出")
+    p_chk.add_argument("--apply", action="store_true", help="将发现的新版本号写回 tools.json")
     p_chk.add_argument("--fail-on-updates", action="store_true", help="发现新版本时返回退出码 1")
     p_chk.set_defaults(func=cmd_check_updates)
 

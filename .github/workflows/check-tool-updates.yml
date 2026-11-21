@@ -7,85 +7,91 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  issues: write
+  contents: write
+  pull-requests: write
 
 jobs:
   check-updates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Check upstream tool versions
+      - name: Check and apply upstream tool versions
         id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/tools.py check-updates --json > updates.json
-          python3 scripts/tools.py check-updates --markdown > updates.md
+          python3 scripts/tools.py check-updates --apply --markdown > updates.md
           cat updates.md
-          HAS_UPDATES=$(python3 -c 'import json; print("true" if json.load(open("updates.json"))["has_updates"] else "false")')
-          echo "has_updates=$HAS_UPDATES" >> "$GITHUB_OUTPUT"
+          if git diff --quiet tools.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Create or update tracking issue
-        if: steps.check.outputs.has_updates == 'true'
+      - name: Push update branch
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          BRANCH="chore/tool-updates"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add tools.json
+          git commit -m "chore: bump upstream migration tool versions"
+          git push --force origin "$BRANCH"
+
+      - name: Create or update Pull Request
+        if: steps.check.outputs.changed == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const table = fs.readFileSync('updates.md', 'utf8').trim();
-            const title = '上游会话迁移工具版本更新巡检';
-            const label = 'tool-update';
+            const branch = 'chore/tool-updates';
+            const base = context.payload.repository.default_branch || 'main';
+            const title = 'chore: bump upstream migration tool versions';
             const body = [
-              '检测到 `tools.json` 中锁定的上游工具有新版本发布：',
+              '检测到 `tools.json` 中锁定的上游工具有新版本发布，已自动更新版本号供审阅合并：',
               '',
               table,
               '',
-              '### 建议升级流程',
-              '1. 查看对应工具的 Release Notes，确认 CLI 参数与会话格式无破坏性变更；',
-              '2. 本地临时安装新版本并运行 `python3 scripts/smoke_test.py` 隔离冒烟验证；',
-              '3. 验证通过后更新 `tools.json`、`README.md` 与对应 `references/*.md` 中的版本号及限制说明。',
+              '### 合并前检查清单',
+              '- [ ] 查看对应工具的 Release Notes，确认 CLI 参数与会话格式无破坏性变更；',
+              '- [ ] 本地检出本分支后运行 `python3 scripts/smoke_test.py` 隔离冒烟验证；',
+              '- [ ] 同步更新 `README.md` 与对应 `references/*.md` 中的版本号及限制说明。',
               '',
               `_自动巡检时间：${new Date().toISOString()}_`,
             ].join('\n');
 
-            try {
-              await github.rest.issues.createLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: label,
-                color: '0e8a16',
-                description: 'Upstream migration tool version check',
-              });
-            } catch (err) {
-              if (err.status !== 422) throw err;
-            }
-
-            const { data: issues } = await github.rest.issues.listForRepo({
+            const { data: prs } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              labels: label,
-              per_page: 20,
+              head: `${context.repo.owner}:${branch}`,
+              base,
             });
-            const existing = issues.find((i) => i.title === title);
-            if (existing) {
-              await github.rest.issues.update({
+
+            if (prs.length > 0) {
+              await github.rest.pulls.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: existing.number,
+                pull_number: prs[0].number,
+                title,
                 body,
               });
             } else {
-              await github.rest.issues.create({
+              await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title,
+                head: branch,
+                base,
                 body,
-                labels: [label],
               });
             }
